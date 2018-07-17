@@ -128,7 +128,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"></EditText>
-
         <Button
             android:id="@+id/buttonSearch"
             android:layout_width="wrap_content"
@@ -137,4 +136,11 @@
             android:onClick="searchClick"
             android:text="Search" />
     </LinearLayout>
+    <TableLayout
+        android:id="@+id/tableDB"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:focusableInTouchMode="true"
+        android:focusable="true">
+    </TableLayout>
 </LinearLayout>

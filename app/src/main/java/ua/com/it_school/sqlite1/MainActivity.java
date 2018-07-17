@@ -6,11 +6,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -25,8 +30,7 @@ public class MainActivity extends Activity {
 
 
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -44,9 +48,8 @@ public class MainActivity extends Activity {
         cv = new ContentValues(); // создаем объект для данных
     }
 
-    public void addClick(View view)
-    {
-        Log.d(LOG_TAG, "--- Insert in students: ---");
+    public void addClick(View view) {
+        Log.d(LOG_TAG, "Вставка записи в таблицу students: ");
         // получаем данные из полей ввода
         String id = editID.getText().toString();
         String name = editName.getText().toString();
@@ -58,28 +61,38 @@ public class MainActivity extends Activity {
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
         // вставляем запись и получаем ее ID
-        long rowID = db.insert("students", null, cv);
-        Log.d(LOG_TAG, "row inserted, ID = " + rowID);
+        db.beginTransaction();
+        try {
+            long rowID = db.insert("students", null, cv);
+            db.setTransactionSuccessful();
+            Log.d(LOG_TAG, "Добавлена 1 запись с ID = " + rowID);
+        } finally {
+            db.endTransaction();
+        }
 
         dbHelper.close(); // закрываем подключение к БД
     }
 
-    public void clearClick(View view)
-    {
-        Log.d(LOG_TAG, "--- Clear students: ---");
+    public void clearClick(View view) {
+        Log.d(LOG_TAG, "Очистка содержимого таблицы students:");
 
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
         // удаляем все записи
-        int clearCount = db.delete("students", null, null);
-        Log.d(LOG_TAG, "deleted rows count = " + clearCount);
+        db.beginTransaction();
+        try {
+            int deleteCount = db.delete("students", null, null);
+            db.setTransactionSuccessful();
+            Log.d(LOG_TAG, "Всего записей удалено: " + deleteCount);
+        } finally {
+            db.endTransaction();
+        }
 
         dbHelper.close(); // закрываем подключение к БД
     }
 
-    public void readClick(View view)
-    {
-        Log.d(LOG_TAG, "--- Rows in students: ---");
+    public void readClick(View view) {
+        Log.d(LOG_TAG, "Выборка всех записей из таблицы students:");
 
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
@@ -87,30 +100,26 @@ public class MainActivity extends Activity {
         Cursor c = db.query("students", null, null, null, null, null, null);
 
         // ставим позицию курсора на первую строку выборки. Если в выборке нет строк, вернется false
-        if (c.moveToFirst())
-        {
+        if (c.moveToFirst()) {
             // определяем номера столбцов по имени в выборке
             int idColIndex = c.getColumnIndex("id");
             int nameColIndex = c.getColumnIndex("name");
             int addressColIndex = c.getColumnIndex("address");
 
-            do
-            {
+            do {
                 // получаем значения по номерам столбцов и пишем все в лог
                 Log.d(LOG_TAG, "ID = " + c.getInt(idColIndex) + ", name = " + c.getString(nameColIndex) + ", address = " + c.getString(addressColIndex));
                 // переход на следующую строку
                 // а если следующей нет (текущая - последняя), то false - выходим из цикла
             } while (c.moveToNext());
-        }
-        else
-            Log.d(LOG_TAG, "0 rows");
+        } else
+            Log.d(LOG_TAG, "0 строк");
         c.close();
 
         dbHelper.close(); // закрываем подключение к БД
     }
 
-    public void updateClick(View view)
-    {
+    public void updateClick(View view) {
         String id = editID.getText().toString();
         if (id.equalsIgnoreCase(""))
             return;
@@ -118,7 +127,7 @@ public class MainActivity extends Activity {
         String name = editName.getText().toString();
         String address = editAddress.getText().toString();
 
-        Log.d(LOG_TAG, "--- Update students: ---");
+        Log.d(LOG_TAG, "Обновление записей таблицы по условию: ");
         // подготовим значения для обновления
         cv.put("name", name);
         cv.put("address", address);
@@ -126,100 +135,95 @@ public class MainActivity extends Activity {
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
         // обновляем по id
-        int updCount = db.update("students", cv, "id = ?",
-                new String[] { id });
-        Log.d(LOG_TAG, "updated rows count = " + updCount);
+        db.beginTransaction();
+        try {
+            int updCount = db.update("students", cv, "id = ?", new String[]{id});
+            db.setTransactionSuccessful();
+            Log.d(LOG_TAG, "Всего записей обновлено: " + updCount);
+        } finally {
+            db.endTransaction();
+        }
 
         dbHelper.close(); // закрываем подключение к БД
     }
 
-    public void deleteClick(View view)
-    {
+    public void deleteClick(View view) {
         String id = editID.getText().toString();
 
         if (id.equalsIgnoreCase(""))
             return;
 
-        Log.d(LOG_TAG, "--- Delete from students record with ID = " + id + ": ---");
+        Log.d(LOG_TAG, "Удалить записи из таблицы students, у которых ID = " + id);
 
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
         // удаляем по id
         int delCount = db.delete("students", "id = " + id, null);
-        Log.d(LOG_TAG, "deleted rows count = " + delCount);
+        Log.d(LOG_TAG, "Всего записей удалено: " + delCount);
 
         // закрываем подключение к БД
         dbHelper.close();
     }
 
-    public void searchClick(View view)
-    {
+    public void searchClick(View view) {
         db = dbHelper.getWritableDatabase(); // подключаемся к БД
 
-        // курсор
-        Cursor c = null;
+        Cursor c = null; // курсор для получения результатов
 
-        // переменные для query
+        // переменные для параметров запроса query
         String[] columns = null;
         String selection = null;
         String[] selectionArgs = null;
         String groupBy = null;
         String having = null;
         String orderBy = null;
-        String queryParam = "%"+editSearch.getText().toString()+"%";
+        String queryParam = "%" + editSearch.getText().toString() + "%";
 
-        Log.d(LOG_TAG, "--- Имя или адрес содержит: " + queryParam + " ---");
+        Log.d(LOG_TAG, "Записи, в которых поле Имя или Адрес содержит: " + queryParam);
         selection = " name LIKE ? or address LIKE ?";
-        selectionArgs = new String[] { queryParam, queryParam};
+        selectionArgs = new String[]{queryParam, queryParam};
 
-        c = db.query("students", null, selection, selectionArgs, null, null,null);
+        c = db.query("students", null, selection, selectionArgs, null, null, null);
 
         // обработка результатов запроса
-        if (c != null)
-        {
-            if (c.moveToFirst())
-            {
+        if (c != null) {
+            if (c.moveToFirst()) {
                 String str;
-                do
-                {
+                do {
                     str = "";
                     for (String cn : c.getColumnNames())
-                    {
                         str = str.concat(cn + " = " + c.getString(c.getColumnIndex(cn)) + "; ");
-                    }
+
                     Log.d(LOG_TAG, str);
 
                 } while (c.moveToNext());
             }
             c.close();
         } else
-            Log.d(LOG_TAG, "Cursor is null");
+            Log.d(LOG_TAG, "Нет результатов (курсор пуст)");
 
 
         dbHelper.close(); // закрываем подключение к БД
     }
 
-    class DBHelper extends SQLiteOpenHelper
-    {
-        public DBHelper(Context context)
-        {
+    class DBHelper extends SQLiteOpenHelper {
+        // http://www.sqlitetutorial.net/
+        public DBHelper(Context context) {
             super(context, "StudentsDB", null, 1); // конструктор суперкласса
         }
 
         @Override
-        public void onCreate(SQLiteDatabase db)
-        {
-            Log.d(LOG_TAG, "--- onCreate database ---");
+        public void onCreate(SQLiteDatabase db) {
+            Log.d(LOG_TAG, "Создаём БД: ");
             // создаем таблицу с полями
-            db.execSQL("create table students ("
-                    + "id integer primary key autoincrement,"
-                    + "name text,"
-                    + "address text" + ");");
+            db.execSQL("create table students (" +
+                    "id integer primary key autoincrement," +
+                    "name text," +
+                    "address text" + ");");
         }
 
         @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
-        {
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
         }
     }
