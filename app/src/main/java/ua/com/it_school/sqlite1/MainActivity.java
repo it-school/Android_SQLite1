@@ -2,20 +2,14 @@ package ua.com.it_school.sqlite1;
 
 import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -24,15 +18,22 @@ public class MainActivity extends Activity {
     Button btnAdd, btnRead, btnClear, btnUpd, btnDel;
     EditText editName, editAddress, editID, editSearch;
 
+    public static Button button;
+
+    DataBase dataBase;
+
     DBHelper dbHelper;
     ContentValues cv;
     SQLiteDatabase db;
 
+    int i = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        dataBase = new DataBase(getApplicationContext());
 
         btnAdd = findViewById(R.id.btnAdd);
         btnRead = findViewById(R.id.btnRead);
@@ -43,6 +44,7 @@ public class MainActivity extends Activity {
         editAddress = findViewById(R.id.editAddress);
         editID = findViewById(R.id.editID);
         editSearch = findViewById(R.id.editSearch);
+        button = findViewById(R.id.buttonCreatePeople);
 
         dbHelper = new DBHelper(this); // создаем объект для создания и управления версиями БД
         cv = new ContentValues(); // создаем объект для данных
@@ -204,27 +206,45 @@ public class MainActivity extends Activity {
 
 
         dbHelper.close(); // закрываем подключение к БД
+
     }
 
-    class DBHelper extends SQLiteOpenHelper {
-        // http://www.sqlitetutorial.net/
-        public DBHelper(Context context) {
-            super(context, "StudentsDB", null, 1); // конструктор суперкласса
-        }
 
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            Log.d(LOG_TAG, "Создаём БД: ");
-            // создаем таблицу с полями
-            db.execSQL("create table students (" +
-                    "id integer primary key autoincrement," +
-                    "name text," +
-                    "address text" + ");");
-        }
+    public void OnPeopleCreate(View view) {
 
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
+        button.setVisibility(View.INVISIBLE);
+
+        //
+
+        //
+        DataBase.isRunning = true;
+        //while(DataBase.isRunning)
+        {
+            new CountDownTimer(100, 100) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    System.out.println(millisUntilFinished);
+
+                    if (i == 0) {
+                        dataBase.Insert();
+                        i++;
+                    }
+
+                }
+
+                @Override
+                public void onFinish() {
+                    if (!DataBase.isRunning) {
+                        button.setVisibility(View.VISIBLE);
+                        i = 0;
+                    }
+                }
+            }.start();
         }
+        //
+        //readClick(view);
     }
+
+
 }
